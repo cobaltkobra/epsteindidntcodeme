@@ -2,7 +2,7 @@
 FROM python:3.11
 
 # Set working directory
-WORKDIR /app
+WORKDIR /epsteindidntcodeme
 
 # Copy local code to the container
 COPY . .
