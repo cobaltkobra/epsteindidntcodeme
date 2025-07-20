@@ -41,7 +41,7 @@ for comment in reddit.subreddit(STREAM_SUBREDDITS).stream.comments(skip_existing
                 comment.reply(REPLY_TEXT)
                 print(f"✅ Replied to comment ID: {comment.id} in r/{subreddit_name}")
                 already_replied.add(comment.id)
-                time.sleep(20)
+                time.sleep(5)
     except Exception as e:
         print(f"⚠️ Error: {e}")
-        time.sleep(20)
+        time.sleep(5)
