@@ -10,7 +10,7 @@ with open("reply.txt", "r", encoding="utf-8") as f:
 KEYWORDS = ["epstein", "Epstein files", "trump", "trump is a pedo", "pedo trump", "trumpstein files", "u/EpsteinDidntCodeMe print"]
 
 # Subreddit whitelist - lowercase only
-WHITELISTED_SUBS = ["conspiracy", "politics", "worldnews", "sipstea", "agedlikemilk", "bottesting", "epsteindidntcodeme"]
+WHITELISTED_SUBS = ["conspiracy", "politics", "worldnews", "sipstea", "agedlikemilk", "bottesting", "epsteindidntcodeme", "conservativememes", "highqualitygifs", "askreddit", "funny", "pics"]
 
 # Stream from all Reddit comments, we'll filter later
 STREAM_SUBREDDITS = "all"
