@@ -7,11 +7,11 @@ import re
 from datetime import datetime, timedelta
 
 # --- CONFIG ---
-REPLY_COOLDOWN = 20  # Global delay between replies
-USER_COOLDOWN_SECONDS = 3600  # Cooldown per user
-SUBREDDIT_COOLDOWN_SECONDS = 300  # Cooldown per subreddit
+REPLY_COOLDOWN = 20
+USER_COOLDOWN_SECONDS = 3600
+SUBREDDIT_COOLDOWN_SECONDS = 300
 MIN_COMMENT_LENGTH = 20
-SHADOW_MODE = False  # True = dry run
+SHADOW_MODE = False
 
 # --- FILE LOADERS ---
 def load_lines(filepath):
@@ -126,9 +126,17 @@ for comment in reddit.subreddit("all").stream.comments(skip_existing=True):
         if "RATELIMIT" in str(e):
             print(f"⛔ Reddit rate limit hit: {e}")
 
-            # Try to extract wait time from message
-            match = re.search(r"(\d+)\s*seconds?", str(e))
-            wait_time = int(match.group(1)) if match else 60
+            # Extract minutes and seconds from the message
+            minutes = re.search(r"(\d+)\s*minute", str(e))
+            seconds = re.search(r"(\d+)\s*second", str(e))
+
+            wait_time = 0
+            if minutes:
+                wait_time += int(minutes.group(1)) * 60
+            if seconds:
+                wait_time += int(seconds.group(1))
+            if wait_time == 0:
+                wait_time = 60  # Fallback default
 
             print(f"⏳ Sleeping for {wait_time} seconds...")
             time.sleep(wait_time)
