@@ -6,11 +6,11 @@ import csv
 from datetime import datetime, timedelta
 
 # --- CONFIG ---
-REPLY_COOLDOWN = 20  # Global delay between replies (in seconds)
-USER_COOLDOWN_SECONDS = 3600  # Cooldown per user (1 hour)
-SUBREDDIT_COOLDOWN_SECONDS = 300  # Cooldown per subreddit (5 mins)
-MIN_COMMENT_LENGTH = 20  # Skip short comments
-SHADOW_MODE = False  # True = dry-run (no replies)
+REPLY_COOLDOWN = 20
+USER_COOLDOWN_SECONDS = 3600
+SUBREDDIT_COOLDOWN_SECONDS = 300
+MIN_COMMENT_LENGTH = 20
+SHADOW_MODE = False
 
 # --- FILE LOADERS ---
 def load_lines(filepath):
@@ -21,10 +21,17 @@ def load_lines(filepath):
         print(f"⚠️ Could not load {filepath}: {e}")
         return []
 
-REPLIES = load_lines("replies.txt")
+def load_reply_text(filepath):
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except Exception as e:
+        print(f"⚠️ Could not load {filepath}: {e}")
+        return "Daddy, I'm broken u/PM_ME_YOUR_ROADCONES help me! (I'm a bot...)"
+
+REPLY_TEXT = load_reply_text("reply.txt")
 KEYWORDS = [kw.lower() for kw in load_lines("keywords.txt")]
 WHITELISTED_SUBS = [sub.lower() for sub in load_lines("whitelist.txt")]
-REPLY_TEXT_FALLBACK = "Daddy, I'm broken u/PM_ME_YOUR_ROADCONES help me! (I'm a bot...)"
 
 # --- REDDIT API AUTH ---
 reddit = praw.Reddit(
@@ -55,7 +62,6 @@ def emoji_tag():
 print("🤖 Bot is starting up...")
 print(f"🌀 Shadow mode: {'ON' if SHADOW_MODE else 'OFF'}")
 print(f"📚 Keywords loaded: {len(KEYWORDS)}")
-print(f"🧾 Reply options: {len(REPLIES)}")
 print(f"📌 Whitelisted subs: {len(WHITELISTED_SUBS)}\n")
 
 # --- MAIN LOOP ---
@@ -83,8 +89,7 @@ for comment in reddit.subreddit("all").stream.comments(skip_existing=True):
         if not matched:
             continue
 
-        reply_text = random.choice(REPLIES) if REPLIES else REPLY_TEXT_FALLBACK
-        full_reply = f"{reply_text} {emoji_tag()}"
+        full_reply = f"{REPLY_TEXT} {emoji_tag()}"
 
         # --- Logging ---
         print("📝 --- REPLY LOG ---")
