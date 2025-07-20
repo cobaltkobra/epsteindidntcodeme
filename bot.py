@@ -2,19 +2,14 @@ import praw
 import os
 import time
 import random
-
-EMOJI_SUFFIXES = ["🧠", "📎", "🔍", "🧬", "🐇", "🕵️‍♂️"]
-def emoji_tag():
-    return random.choice(EMOJI_SUFFIXES)
-
 import csv
 from datetime import datetime, timedelta
 
 # --- CONFIG ---
-REPLY_COOLDOWN = 5  # Global delay between replies (in seconds)
+REPLY_COOLDOWN = 20  # Global delay between replies (in seconds)
 USER_COOLDOWN_SECONDS = 3600  # Cooldown per user (1 hour)
 SUBREDDIT_COOLDOWN_SECONDS = 300  # Cooldown per subreddit (5 mins)
-MIN_COMMENT_LENGTH = 50  # Skip short comments
+MIN_COMMENT_LENGTH = 20  # Skip short comments
 SHADOW_MODE = False  # True = dry-run (no replies)
 
 # --- FILE LOADERS ---
@@ -29,7 +24,7 @@ def load_lines(filepath):
 REPLIES = load_lines("replies.txt")
 KEYWORDS = [kw.lower() for kw in load_lines("keywords.txt")]
 WHITELISTED_SUBS = [sub.lower() for sub in load_lines("whitelist.txt")]
-REPLY_TEXT_FALLBACK = "This is a default fallback reply."
+REPLY_TEXT_FALLBACK = "Daddy, I'm broken u/PM_ME_YOUR_ROADCONES help me! (I'm a bot...)"
 
 # --- REDDIT API AUTH ---
 reddit = praw.Reddit(
@@ -37,7 +32,7 @@ reddit = praw.Reddit(
     client_secret=os.environ["CLIENT_SECRET"],
     username=os.environ["REDDIT_USERNAME"],
     password=os.environ["REDDIT_PASSWORD"],
-    user_agent="epsteindidntcodeme_v3 by u/{}".format(os.environ["REDDIT_USERNAME"])
+    user_agent="epsteindidntcodeme_v2 by u/{}".format(os.environ["REDDIT_USERNAME"])
 )
 
 # --- TRACKING MAPS ---
@@ -50,6 +45,11 @@ def log_to_csv(data):
     with open("log.csv", mode="a", newline='', encoding="utf-8") as file:
         writer = csv.writer(file)
         writer.writerow(data)
+
+# --- EMOJI TAG FUNCTION ---
+EMOJI_SUFFIXES = ["🧠", "📎", "🔍", "🧬", "🐇", "🕵️‍♂️"]
+def emoji_tag():
+    return random.choice(EMOJI_SUFFIXES)
 
 # --- STARTUP LOG ---
 print("🤖 Bot is starting up...")
@@ -84,6 +84,7 @@ for comment in reddit.subreddit("all").stream.comments(skip_existing=True):
             continue
 
         reply_text = random.choice(REPLIES) if REPLIES else REPLY_TEXT_FALLBACK
+        full_reply = f"{reply_text} {emoji_tag()}"
 
         # --- Logging ---
         print("📝 --- REPLY LOG ---")
@@ -102,18 +103,27 @@ for comment in reddit.subreddit("all").stream.comments(skip_existing=True):
             author,
             comment.id,
             ", ".join(matched),
-            f"https://www.reddit.com{comment.permalink}"
+            f"https://www.reddit.com{comment.permalink}",
+            full_reply
         ])
 
         # --- Reply & Cooldowns ---
         if not SHADOW_MODE:
-            comment.reply(f\"{reply_text} {emoji_tag()}\")
+            comment.reply(full_reply)
             already_replied.add(comment.id)
             user_cooldowns[author] = now + timedelta(seconds=USER_COOLDOWN_SECONDS)
             sub_cooldowns[subreddit] = now + timedelta(seconds=SUBREDDIT_COOLDOWN_SECONDS)
 
         time.sleep(REPLY_COOLDOWN)
 
+    except praw.exceptions.APIException as e:
+        if "RATELIMIT" in str(e):
+            print(f"⛔ Reddit rate limit hit: {e}")
+            print("⏳ Sleeping for 8 minutes to cool off...")
+            time.sleep(480)
+        else:
+            print(f"⚠️ API Exception: {e}")
+            time.sleep(REPLY_COOLDOWN)
     except Exception as e:
         print(f"⚠️ Error: {e}")
         time.sleep(REPLY_COOLDOWN)
