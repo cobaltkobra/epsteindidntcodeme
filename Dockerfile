@@ -1,14 +1,13 @@
-# Use slim Python base to reduce image size
 FROM python:3.11-slim
 
-# Set environment vars
+# Environment settings for faster logs + cleaner builds
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set working dir
+# Set working directory
 WORKDIR /app
 
-# Install required system packages for pip + PRAW if needed
+# Install system dependencies needed for pip builds
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -16,12 +15,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install early to leverage caching
+# Install dependencies first to cache layers
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy rest of the project
+# Now copy all files
 COPY . .
 
-# Run bot
+# Default run command
 CMD ["python", "bot.py"]
